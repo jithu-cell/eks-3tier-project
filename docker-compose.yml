@@ -1,0 +1,71 @@
+# ROOT docker-compose.yml
+# Runs all 3 services: Frontend + Backend + PostgreSQL
+# Usage from project root: docker-compose up --build
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: cloudapp-db
+    environment:
+      POSTGRES_DB:       cloudapp_db
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - cloudapp-network
+
+  # ── Node.js Backend API ──────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudapp-backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV:     development
+      PORT:         3001
+      DB_HOST:      postgres    # service name — NOT localhost
+      DB_PORT:      5432
+      DB_NAME:      cloudapp_db
+      DB_USER:      postgres
+      DB_PASSWORD:  postgres123
+      JWT_SECRET:   local_dev_secret_change_in_production
+      FRONTEND_URL: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cloudapp-network
+    restart: unless-stopped
+
+  # ── React Frontend ────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cloudapp-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cloudapp-network
+    restart: unless-stopped
+
+networks:
+  cloudapp-network:
+    driver: bridge
+
+volumes:
+  pgdata:
