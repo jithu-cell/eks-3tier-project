@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: cloudapp
+data:
+  NODE_ENV:    "production"
+  PORT:        "3001"
+  DB_PORT:     "5432"
+  JWT_EXPIRES: "7d"
+
+  # ⚠ REPLACE THIS with your RDS endpoint (no :5432 at end)
+  # Run: aws rds describe-db-instances --region eu-north-1 --query "DBInstances[0].Endpoint.Address" --output text
+  DB_HOST: "cloudapp-postgres.ctm2y04amv5m.eu-north-1.rds.amazonaws.com"
+
+  # Update after you get the ALB URL (after applying frontend/service.yaml)
+  FRONTEND_URL: "http://localhost"
+  

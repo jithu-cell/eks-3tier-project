@@ -6,9 +6,12 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'cloudapp_db',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres123',
+    ssl: {
+        rejectUnauthorized: false  // required for AWS RDS
+    },
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 5000,
 });
 
 pool.connect((err, client, release) => {
