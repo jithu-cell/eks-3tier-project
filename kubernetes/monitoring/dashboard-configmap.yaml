@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudapp-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  cloudapp-dashboard.json: |
+    {
+      "title": "CloudApp Overview",
+      "uid": "cloudapp-overview",
+      "timezone": "browser",
+      "refresh": "30s",
+      "panels": [
+        {
+          "id": 1,
+          "title": "HTTP Request Rate",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "sum(rate(cloudapp_http_requests_total[5m])) by (method, route)",
+            "legendFormat": "{{method}} {{route}}"
+          }]
+        },
+        {
+          "id": 2,
+          "title": "Error Rate %",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "sum(rate(cloudapp_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(cloudapp_http_requests_total[5m])) * 100",
+            "legendFormat": "Error Rate %"
+          }]
+        },
+        {
+          "id": 3,
+          "title": "P99 Latency ms",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [{
+            "expr": "histogram_quantile(0.99, sum(rate(cloudapp_http_request_duration_ms_bucket[5m])) by (le))",
+            "legendFormat": "P99"
+          }]
+        },
+        {
+          "id": 4,
+          "title": "Node CPU %",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [{
+            "expr": "100 - (avg by (instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{instance}}"
+          }]
+        }
+      ],
+      "schemaVersion": 38,
+      "version": 1
+    }

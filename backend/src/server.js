@@ -7,6 +7,7 @@ const initDatabase = require('./config/db-init');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const { register, metricsMiddleware } = require('./middleware/metrics');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,9 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
 }
+
+// ── METRICS MIDDLEWARE ────────────────────────────────────────────────────────
+app.use(metricsMiddleware);
 
 // ── HEALTH CHECK ─────────────────────────────────────────
 // Kubernetes liveness/readiness probes hit this endpoint
@@ -53,6 +57,16 @@ app.get('/health', async (req, res) => {
         version: '1.0.0',
         timestamp: new Date().toISOString(),
     });
+});
+
+// ── PROMETHEUS METRICS ────────────────────────────────────────────────────────
+app.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(500).end(err);
+    }
 });
 
 // ── API ROUTES ───────────────────────────────────────────
